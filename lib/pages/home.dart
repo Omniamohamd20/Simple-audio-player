@@ -12,7 +12,19 @@ class _HomeState extends State<Home> {
   final assetsAudioPlayer = AssetsAudioPlayer();
   @override
   void initState() {
+    initPlayer();
     super.initState();
+  }
+
+  void initPlayer() async {
+    await assetsAudioPlayer.open(
+        Playlist(audios: [
+          Audio('assets/audios/1.mp3', metas: Metas(title: 'first song')),
+          Audio('assets/audios/2.mp3', metas: Metas(title: 'second song')),
+          Audio('assets/audios/3.mp3', metas: Metas(title: 'third song')),
+        ]),
+        autoStart: false);
+    setState(() {});
   }
 
   @override
@@ -21,21 +33,76 @@ class _HomeState extends State<Home> {
       appBar: AppBar(
         title: const Text('Home'),
       ),
-      body: Column(
-        children: [
-          IconButton(
-              onPressed: () async {
-                await assetsAudioPlayer.open(
-                  Audio('assets/audios/1.mp3'),
-                );
-                setState(() {});
-              },
-              icon:assetsAudioPlayer.builderIsPlaying(builder: (context,isPlaying){
-                return Icon(isPlaying
-                  ? Icons.pause
-                  : Icons.play_arrow);})
-          )]
+      body: Center(
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Container(
+              height: 300,
+              width: 300,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: Colors.blue,
+              ),
+              child: Center(
+                  child: StreamBuilder(
+                      stream: assetsAudioPlayer.realtimePlayingInfos,
+                      builder: (context, snapShots) {
+                        if (snapShots.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
+                        return Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                assetsAudioPlayer.getCurrentAudioTitle == ' '
+                                    ? 'please play your audio'
+                                    : assetsAudioPlayer.getCurrentAudioTitle,
+                                style: TextStyle(color: Colors.white,fontSize: 20),
+                              ),
+                                SizedBox(
+                                height: 20,
+                              ),
+                              getBtnWidget,
+                            
+                              SizedBox(
+                                height: 20,
+                              ),
+                              Slider(
+                                value: snapShots.data?.currentPosition.inSeconds.toDouble()??0.0, 
+                                min: 0,
+                                max: snapShots.data?.duration.inSeconds.toDouble()??0.0,
+                              onChanged: (value){}
+                              ),
+                              Text(
+'${convertSeconds(snapShots.data?.currentPosition.inSeconds??0)}   /  ${convertSeconds(snapShots.data?.duration.inSeconds??0)}',
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 15))
+                            ]);
+                      }))),
+        ]),
       ),
     );
   }
+
+  Widget get getBtnWidget =>
+      assetsAudioPlayer.builderIsPlaying(builder: (ctx, isPlaying) {
+        return FloatingActionButton.large(
+          child: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+          onPressed: () {
+            if (isPlaying) {
+              assetsAudioPlayer.pause();
+            } else {
+              assetsAudioPlayer.play();
+            }
+            setState(() {});
+          },
+          shape: CircleBorder(),
+        );
+      });
+     String convertSeconds(int seconds) {
+      String minutes =(seconds ~/ 60).toString();
+      String secondsStr =(seconds% 60) .toString();
+      return '${minutes.padLeft(2,'0')}:${secondsStr.padLeft(2,'0')}';
+     }
 }
