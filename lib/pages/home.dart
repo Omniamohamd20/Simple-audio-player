@@ -75,18 +75,23 @@ class _HomeState extends State<Home> {
                                   children: [
                                     IconButton(
                                       onPressed: () {
-                                        snapShots.data?.current?.index==0?null:
-                                      assetsAudioPlayer.previous();
+                                        snapShots.data?.current?.index == 0
+                                            ? null
+                                            : assetsAudioPlayer.previous();
                                       },
                                       icon: Icon(Icons.skip_previous),
                                     ),
                                     getBtnWidget,
                                     IconButton(
                                       onPressed: () {
-                                              snapShots.data?.current?.index==
-                                              (assetsAudioPlayer.playlist?.audios.length??0)-1?
-                                              null:
-                                        assetsAudioPlayer.next(keepLoopMode: false);
+                                        snapShots.data?.current?.index ==
+                                                (assetsAudioPlayer.playlist
+                                                            ?.audios.length ??
+                                                        0) -
+                                                    1
+                                            ? null
+                                            : assetsAudioPlayer.next(
+                                                keepLoopMode: false);
                                       },
                                       icon: Icon(Icons.skip_next),
                                     )
@@ -104,7 +109,10 @@ class _HomeState extends State<Home> {
                                     max: snapShots.data?.duration.inSeconds
                                             .toDouble() ??
                                         0.0,
-                                    onChanged: (value) {}),
+                                    onChanged: (value) {
+                                      assetsAudioPlayer
+                                          .seek(Duration(seconds: value.toInt()));
+                                    }),
                                 Text(
                                     '${convertSeconds(snapShots.data?.currentPosition.inSeconds ?? 0)}   /  ${convertSeconds(snapShots.data?.duration.inSeconds ?? 0)}',
                                     style: TextStyle(
