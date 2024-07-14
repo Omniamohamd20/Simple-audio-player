@@ -90,8 +90,8 @@ class _HomeState extends State<Home> {
                                                         0) -
                                                     1
                                             ? null
-                                            : assetsAudioPlayer.next(
-                                                keepLoopMode: false);
+                                            : assetsAudioPlayer
+                                                .next();
                                       },
                                       icon: Icon(Icons.skip_next),
                                     )
@@ -110,8 +110,8 @@ class _HomeState extends State<Home> {
                                             .toDouble() ??
                                         0.0,
                                     onChanged: (value) {
-                                      assetsAudioPlayer
-                                          .seek(Duration(seconds: value.toInt()));
+                                      assetsAudioPlayer.seek(
+                                          Duration(seconds: value.toInt()));
                                     }),
                                 Text(
                                     '${convertSeconds(snapShots.data?.currentPosition.inSeconds ?? 0)}   /  ${convertSeconds(snapShots.data?.duration.inSeconds ?? 0)}',
