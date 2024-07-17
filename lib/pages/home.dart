@@ -1,5 +1,6 @@
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:flutter/material.dart';
+import 'package:r3_app/pages/play_list.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -10,6 +11,18 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   final assetsAudioPlayer = AssetsAudioPlayer();
+  int valueEx = 0;
+  double volumeEx = 0.0;
+  double playSpeedEx = 1.0;
+  
+   final playlist = Playlist(audios: [
+    Audio('assets/audios/1.mp3', metas: Metas(
+      title: 'first song',
+    artist: 'Artist 1')),
+    Audio('assets/audios/2.mp3', metas: Metas(title: 'second song',artist: 'Artist 2')),
+   
+    Audio('assets/audios/3.mp3', metas: Metas(title: 'third song',artist: 'Artist 3')),
+  ]);
   @override
   void initState() {
     initPlayer();
@@ -18,12 +31,21 @@ class _HomeState extends State<Home> {
 
   void initPlayer() async {
     await assetsAudioPlayer.open(
-        Playlist(audios: [
-          Audio('assets/audios/1.mp3', metas: Metas(title: 'first song')),
-          Audio('assets/audios/2.mp3', metas: Metas(title: 'second song')),
-          Audio('assets/audios/3.mp3', metas: Metas(title: 'third song')),
-        ]),
-        autoStart: false);
+     playlist,
+        autoStart: false,
+        loopMode: LoopMode.playlist);
+    assetsAudioPlayer.playSpeed.listen((event) {
+      print('>>>>>${event}');
+    });
+    assetsAudioPlayer.currentPosition.listen((event) {
+      valueEx = event.inSeconds;
+    });
+    assetsAudioPlayer.volume.listen((event) {
+      volumeEx = event;
+    });
+    assetsAudioPlayer.currentPosition.listen((event) {
+      valueEx = event.inSeconds;
+    });
     setState(() {});
   }
 
@@ -32,17 +54,25 @@ class _HomeState extends State<Home> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home'),
+        actions: [
+          IconButton(
+              onPressed: () {
+                Navigator.push(context,MaterialPageRoute(builder: (_) => PlayListPage(playlist: playlist)) );
+              },
+              icon: const Icon(Icons.playlist_add_check_circle_sharp))
+        ],
       ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          child: Column(
+          children: [
             Container(
-                height: 300,
-                width: 300,
+                height: 400,
+                width: 420,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: Colors.blue,
+                
+                  color: Colors.brown,
                 ),
                 child: Center(
                     child: StreamBuilder(
@@ -90,8 +120,7 @@ class _HomeState extends State<Home> {
                                                         0) -
                                                     1
                                             ? null
-                                            : assetsAudioPlayer
-                                                .next();
+                                            : assetsAudioPlayer.next();
                                       },
                                       icon: Icon(Icons.skip_next),
                                     )
@@ -101,20 +130,85 @@ class _HomeState extends State<Home> {
                                   height: 20,
                                 ),
                                 Slider(
-                                    value: snapShots
-                                            .data?.currentPosition.inSeconds
-                                            .toDouble() ??
-                                        0.0,
-                                    min: 0,
-                                    max: snapShots.data?.duration.inSeconds
-                                            .toDouble() ??
-                                        0.0,
-                                    onChanged: (value) {
-                                      assetsAudioPlayer.seek(
-                                          Duration(seconds: value.toInt()));
-                                    }),
+                                  value: valueEx.toDouble(),
+                                  min: 0,
+                                  max: snapShots.data?.duration.inSeconds
+                                          .toDouble() ??
+                                      0.0,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      valueEx = value.toInt();
+                                    });
+                                  },
+                                  onChangeEnd: (value) async {
+                                    await assetsAudioPlayer
+                                        .seek(Duration(seconds: value.toInt()));
+                                  },
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SegmentedButton(
+                                        onSelectionChanged: (values) {
+                                          volumeEx = values.first.toDouble();
+                                          assetsAudioPlayer.setVolume(volumeEx);
+                                          setState(() {});
+                                        },
+                                        segments: const [
+                                          ButtonSegment(
+                                            icon: Icon(Icons.volume_up),
+                                            value: 1.0,
+                                          ),
+                                          ButtonSegment(
+                                            icon: Icon(Icons.volume_down),
+                                            value: 0.5,
+                                          ),
+                                          ButtonSegment(
+                                            icon: Icon(Icons.volume_mute),
+                                            value: 0,
+                                          ),
+                                        ],
+                                        selected: {
+                                          volumeEx
+                                        })
+                                  ],
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SegmentedButton(
+                                        onSelectionChanged: (values) {
+                                          playSpeedEx = values.first.toDouble();
+                                          assetsAudioPlayer
+                                              .setPlaySpeed(playSpeedEx);
+                                          setState(() {});
+                                        },
+                                        segments: const [
+                                          ButtonSegment(
+                                            icon: Text('1X'),
+                                            value: 1.0,
+                                          ),
+                                          ButtonSegment(
+                                            icon: Text('2X'),
+                                            value: 4.0,
+                                          ),
+                                          ButtonSegment(
+                                            icon: Text('3X'),
+                                            value: 8.0,
+                                          ),
+                                          ButtonSegment(
+                                            icon: Text('4X'),
+                                            value: 16.0,
+                                          ),
+                                        ],
+                                        selected: {
+                                          playSpeedEx
+                                        }),
+                                  ],
+                                ),
+                                SizedBox(height: 10),
                                 Text(
-                                    '${convertSeconds(snapShots.data?.currentPosition.inSeconds ?? 0)}   /  ${convertSeconds(snapShots.data?.duration.inSeconds ?? 0)}',
+                                    '${convertSeconds(valueEx)}  /  ${convertSeconds(snapShots.data?.duration.inSeconds ?? 0)}',
                                     style: TextStyle(
                                         color: Colors.white, fontSize: 15))
                               ]);
