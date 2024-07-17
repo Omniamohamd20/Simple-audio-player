@@ -10,17 +10,26 @@ class SongWidget extends StatefulWidget {
 
 class _SongWidgetState extends State<SongWidget> {
   final assetsAudioPlayer = AssetsAudioPlayer();
+  int valueEx = 0;
   @override
   void initState() {
-    assetsAudioPlayer.open(widget.audio, autoStart: false);
+    initPlayer();
     super.initState();
+  }
+
+  void initPlayer() async {
+    assetsAudioPlayer.open(widget.audio, autoStart: false);
+    assetsAudioPlayer.currentPosition.listen((event) {
+      valueEx = event.inSeconds;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      trailing: Container(width: 100,
-      alignment: Alignment.centerRight,
+      trailing: Container(
+        width: 150,
+        alignment: Alignment.centerRight,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
@@ -32,16 +41,17 @@ class _SongWidgetState extends State<SongWidget> {
                   }
                   if (snapshots.data == null) return const SizedBox.shrink();
                   return Text(
-                    convertSeconds(snapshots.data?.duration.inSeconds ?? 0),
+                    '${convertSeconds(valueEx)} / ${convertSeconds(snapshots.data?.duration.inSeconds ?? 0)}',
                     style: TextStyle(color: Colors.white),
                   );
                 }),
-                SizedBox(width: 10,),
-                getBtnWidget
+            SizedBox(
+              width: 10,
+            ),
+            getBtnWidget
           ],
         ),
       ),
-          
       leading: CircleAvatar(
         child: Center(
           child: Text(
@@ -57,8 +67,6 @@ class _SongWidgetState extends State<SongWidget> {
         style: TextStyle(color: Colors.white),
       ),
       onTap: () {
-  
-
         setState(() {});
       },
     );
@@ -69,7 +77,7 @@ class _SongWidgetState extends State<SongWidget> {
     String secondsStr = (seconds % 60).toString();
     return '${minutes.padLeft(2, '0')}:${secondsStr.padLeft(2, '0')}';
   }
-  
+
   Widget get getBtnWidget =>
       assetsAudioPlayer.builderIsPlaying(builder: (ctx, isPlaying) {
         return FloatingActionButton.small(
